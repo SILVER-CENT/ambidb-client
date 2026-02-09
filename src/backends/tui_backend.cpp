@@ -2,6 +2,8 @@
 #include "imtui/imtui.h"
 #include "imtui/imtui-impl-ncurses.h"
 #include <ncurses.h>
+#include <thread>
+#include <chrono>
 
 namespace ambidb {
 
@@ -14,16 +16,9 @@ bool TuiBackend::Initialize() {
 
     // ImTui doesn't use standard ImGui backends
     m_screen = ImTui_ImplNcurses_Init(true);
-    if (!m_screen) {
-        // Clean up any partial ImTui/ImGui initialization on failure
-        ImTui_ImplNcurses_Shutdown();
-        ImGui::DestroyContext();
-        return false;
-    }
-
     ImTui_ImplText_Init();
 
-    return true;
+    return m_screen != nullptr;
 }
 
 void TuiBackend::Run() {
@@ -37,6 +32,9 @@ void TuiBackend::Run() {
         ImGui::Render();
         ImTui_ImplText_RenderDrawData(ImGui::GetDrawData(), (ImTui::TScreen*)m_screen);
         ImTui_ImplNcurses_DrawScreen(true);
+
+        // Prevent busy-spinning and high CPU usage
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 

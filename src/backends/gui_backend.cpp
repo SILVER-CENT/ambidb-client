@@ -1,4 +1,5 @@
 #include "gui_backend.h"
+#include <iostream>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -17,11 +18,7 @@ bool GuiBackend::Initialize() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     m_window = glfwCreateWindow(1280, 720, "AmbiDB Client (GUI)", nullptr, nullptr);
-    if (!m_window) {
-        glfwTerminate();
-        m_window = nullptr;
-        return false;
-    }
+    if (!m_window) return false;
 
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1); // Enable vsync
@@ -33,20 +30,8 @@ bool GuiBackend::Initialize() {
 
     ImGui::StyleColorsDark();
 
-    bool glfw_imgui_ok = ImGui_ImplGlfw_InitForOpenGL(m_window, true);
-    bool gl3_imgui_ok = ImGui_ImplOpenGL3_Init(glsl_version);
-    if (!glfw_imgui_ok || !gl3_imgui_ok) {
-        if (gl3_imgui_ok) {
-            ImGui_ImplOpenGL3_Shutdown();
-        }
-        if (glfw_imgui_ok) {
-            ImGui_ImplGlfw_Shutdown();
-        }
-        ImGui::DestroyContext();
-        glfwDestroyWindow(m_window);
-        glfwTerminate();
-        return false;
-    }
+    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
 
     return true;
 }
