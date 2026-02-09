@@ -17,7 +17,11 @@ bool GuiBackend::Initialize() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     m_window = glfwCreateWindow(1280, 720, "AmbiDB Client (GUI)", nullptr, nullptr);
-    if (!m_window) return false;
+    if (!m_window) {
+        glfwTerminate();
+        m_window = nullptr;
+        return false;
+    }
 
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1); // Enable vsync
