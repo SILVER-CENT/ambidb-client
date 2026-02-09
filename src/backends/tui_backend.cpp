@@ -14,9 +14,16 @@ bool TuiBackend::Initialize() {
 
     // ImTui doesn't use standard ImGui backends
     m_screen = ImTui_ImplNcurses_Init(true);
+    if (!m_screen) {
+        // Clean up any partial ImTui/ImGui initialization on failure
+        ImTui_ImplNcurses_Shutdown();
+        ImGui::DestroyContext();
+        return false;
+    }
+
     ImTui_ImplText_Init();
 
-    return m_screen != nullptr;
+    return true;
 }
 
 void TuiBackend::Run() {
