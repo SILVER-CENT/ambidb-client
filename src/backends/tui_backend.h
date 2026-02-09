@@ -1,20 +1,30 @@
 #pragma once
-#include "../app.h"
-#include <memory>
+
+#include "backend_base.h"
 
 namespace ambidb {
 
-class TuiBackend {
+/**
+ * @brief TUI backend implementation using ncurses and ImTui.
+ *
+ * This backend provides a terminal-based interface suitable for
+ * SSH sessions and headless servers without display servers.
+ */
+class TuiBackend : public BackendBase {
 public:
-    TuiBackend();
-    ~TuiBackend();
+    TuiBackend() = default;
+    ~TuiBackend() override = default;
 
-    bool Initialize();
-    void Run();
-    void Shutdown();
+    void Run() override;
+    const char* GetName() const override { return "TUI"; }
+
+protected:
+    bool InitializeBackend() override;
+    bool InitializeImGui() override;
+    void ShutdownImGui() override;
+    void ShutdownBackend() override;
 
 private:
-    std::unique_ptr<App> m_app;
     void* m_screen = nullptr;
 };
 

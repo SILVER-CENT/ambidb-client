@@ -1,22 +1,32 @@
 #pragma once
-#include "../app.h"
-#include <memory>
+
+#include "backend_base.h"
 
 struct GLFWwindow;
 
 namespace ambidb {
 
-class GuiBackend {
+/**
+ * @brief GUI backend implementation using GLFW and OpenGL.
+ *
+ * This backend provides a hardware-accelerated graphical interface
+ * suitable for desktop environments with display servers.
+ */
+class GuiBackend : public BackendBase {
 public:
-    GuiBackend();
-    ~GuiBackend();
+    GuiBackend() = default;
+    ~GuiBackend() override = default;
 
-    bool Initialize();
-    void Run();
-    void Shutdown();
+    void Run() override;
+    const char* GetName() const override { return "GUI"; }
+
+protected:
+    bool InitializeBackend() override;
+    bool InitializeImGui() override;
+    void ShutdownImGui() override;
+    void ShutdownBackend() override;
 
 private:
-    std::unique_ptr<App> m_app;
     GLFWwindow* m_window = nullptr;
 };
 
