@@ -6,7 +6,7 @@ This document describes the interface between the TUI and GUI backends in the Am
 
 ## Architecture Principles
 
-The AmbiDB client follows a **Backend Abstraction Pattern** where:
+The AmbiDB client follows a **Backend Abstraction Pattern** with **C++23 compile-time polymorphism** where:
 
 1. **Application Logic is Backend-Agnostic**: The `App` class contains all business logic and UI definitions using ImGui API primitives
 2. **Backends Handle Rendering Only**: GUI and TUI backends are responsible solely for:
@@ -14,6 +14,7 @@ The AmbiDB client follows a **Backend Abstraction Pattern** where:
    - Managing the render loop
    - Translating ImGui draw commands to their rendering target (OpenGL or ncurses)
 3. **Compile-Time Backend Selection**: The backend is selected at CMake configuration time, not runtime
+4. **Zero Runtime Overhead**: Uses CRTP (Curiously Recurring Template Pattern) and C++23 concepts instead of virtual functions
 
 ## Component Diagram
 
@@ -28,19 +29,17 @@ The AmbiDB client follows a **Backend Abstraction Pattern** where:
 ┌───────────▼──────────┐      ┌──────────▼──────────┐
 │    GuiBackend        │      │    TuiBackend       │
 │  (GLFW + OpenGL)     │      │  (ncurses + ImTui)  │
+│                      │      │                     │
+│ BackendBase<         │      │ BackendBase<        │
+│   GuiBackend>        │      │   TuiBackend>       │
 └───────────┬──────────┘      └──────────┬──────────┘
             │                             │
             └──────────────┬──────────────┘
                            │
                    ┌───────▼────────┐
-                   │  BackendBase   │
-                   │  (Template     │
-                   │   Method)      │
-                   └───────┬────────┘
-                           │
-                   ┌───────▼────────┐
-                   │   IBackend     │
-                   │  (Interface)   │
+                   │ Backend Concept│
+                   │ (Compile-time) │
+                   │  Validation    │
                    └───────┬────────┘
                            │
                    ┌───────▼────────┐
@@ -51,38 +50,63 @@ The AmbiDB client follows a **Backend Abstraction Pattern** where:
 
 ## Class Hierarchy
 
-### IBackend (Interface)
+### Backend Concept (C++23)
 
-**File**: `backend_interface.h`
+**File**: `backend_concept.h`
 
-Defines the contract that all backends must implement:
+Defines the compile-time requirements for backends using C++23 concepts:
 
 ```cpp
-class IBackend {
-public:
-    virtual bool Initialize() = 0;  // Setup backend and ImGui
-    virtual void Run() = 0;          // Main render loop
-    virtual void Shutdown() = 0;     // Cleanup resources
-    virtual const char* GetName() const = 0;  // Backend identification
+template<typename T>
+concept Backend = requires(T& backend, const T& const_backend) {
+    { backend.InitializeBackend() } -> std::same_as<bool>;
+    { backend.InitializeImGui() } -> std::same_as<bool>;
+    { backend.Run() } -> std::same_as<void>;
+    { backend.ShutdownImGui() } -> std::same_as<void>;
+    { backend.ShutdownBackend() } -> std::same_as<void>;
+    { const_backend.GetName() } -> std::convertible_to<const char*>;
 };
 ```
 
-### BackendBase (Abstract Base Class)
+**Benefits**:
+- Compile-time validation of backend interface
+- Clear compiler error messages when interface is not satisfied
+- No runtime overhead (no vtables, no virtual function calls)
+- Better optimization opportunities for compilers
+
+### BackendBase (CRTP Template Base Class)
 
 **File**: `backend_base.h`
 
-Provides common functionality using the Template Method pattern:
+Provides common functionality using CRTP (Curiously Recurring Template Pattern):
 
+```cpp
+template<typename Derived>
+class BackendBase {
+public:
+    bool Initialize() {
+        static_assert(Backend<Derived>, "Must satisfy Backend concept");
+        // Calls derived().InitializeBackend() and derived().InitializeImGui()
+    }
+    // ...
+};
+```
+
+**Key Features**:
 - **Manages App lifecycle**: Creates and owns the `App` instance
 - **Orchestrates initialization**: Calls backend-specific hooks in the correct order
 - **Provides logging**: Adds consistent logging for initialization and shutdown
 - **Error handling**: Ensures proper error propagation
+- **Zero overhead**: All calls resolved at compile-time via CRTP
+- **Type safety**: Static assertions verify derived class satisfies Backend concept
 
-Derived classes implement these protected methods:
+Derived classes must implement these public methods:
 - `InitializeBackend()`: Backend-specific setup (window, screen)
 - `InitializeImGui()`: ImGui context and rendering backend setup
+- `Run()`: Main event loop
 - `ShutdownImGui()`: ImGui cleanup
 - `ShutdownBackend()`: Backend-specific cleanup
+- `GetName() const`: Return backend name
 
 ### GuiBackend
 
@@ -211,30 +235,39 @@ Backend::Shutdown()
 
 ## Optimization Strategies Applied
 
-1. **Eliminated Code Duplication**: Common patterns extracted to `BackendBase`
-2. **Improved Error Handling**: All initialization failures are logged with context
-3. **Configuration Management**: Magic numbers moved to `backend_config.h`
-4. **Better Resource Management**: Added null checks and proper cleanup order
-5. **Documentation**: Inline comments explain non-obvious logic (e.g., TUI polling)
-6. **Interface Clarity**: `IBackend` makes the contract explicit
+1. **Eliminated Code Duplication**: Common patterns extracted to `BackendBase` CRTP template
+2. **Zero Runtime Overhead**: Replaced virtual functions with compile-time CRTP pattern
+3. **C++23 Concepts**: Type-safe compile-time validation of backend interface
+4. **Improved Error Handling**: All initialization failures are logged with context
+5. **Configuration Management**: Magic numbers moved to `backend_config.h`
+6. **Better Resource Management**: Added null checks and proper cleanup order
+7. **Documentation**: Inline comments explain non-obvious logic (e.g., TUI polling)
+8. **Interface Clarity**: Backend concept makes the contract explicit
 
 ## Adding a New Backend
 
 To add a new backend (e.g., for WebAssembly):
 
 1. Create `new_backend.h` and `new_backend.cpp`
-2. Inherit from `BackendBase`
-3. Implement the four protected methods:
-   - `InitializeBackend()`
-   - `InitializeImGui()`
-   - `ShutdownImGui()`
-   - `ShutdownBackend()`
-4. Implement `Run()` with your render loop
-5. Implement `GetName()` to return a descriptive name
-6. Add CMake configuration for your backend
-7. Update `main.cpp` to include your backend header
+2. Inherit from `BackendBase<NewBackend>` using CRTP:
+   ```cpp
+   class NewBackend : public BackendBase<NewBackend> {
+   public:
+       // Implement required methods
+       bool InitializeBackend();
+       bool InitializeImGui();
+       void Run();
+       void ShutdownImGui();
+       void ShutdownBackend();
+       const char* GetName() const { return "WebAssembly"; }
+   };
+   ```
+3. The compiler will validate your implementation satisfies the Backend concept via `static_assert`
+4. Implement the required methods with backend-specific logic
+5. Add CMake configuration for your backend
+6. Update `main.cpp` to include your backend header with appropriate `#ifdef`
 
-The `App` class requires no changes - it remains fully backend-agnostic.
+The `App` class requires no changes - it remains fully backend-agnostic. The Backend concept ensures compile-time type safety without any runtime overhead.
 
 ## Testing Strategy
 

@@ -9,20 +9,21 @@ namespace ambidb {
  *
  * This backend provides a terminal-based interface suitable for
  * SSH sessions and headless servers without display servers.
+ *
+ * Uses CRTP pattern via BackendBase<TuiBackend> for compile-time polymorphism.
  */
-class TuiBackend : public BackendBase {
+class TuiBackend : public BackendBase<TuiBackend> {
 public:
     TuiBackend() = default;
-    ~TuiBackend() override = default;
+    ~TuiBackend() = default;
 
-    void Run() override;
-    const char* GetName() const override { return "TUI"; }
-
-protected:
-    bool InitializeBackend() override;
-    bool InitializeImGui() override;
-    void ShutdownImGui() override;
-    void ShutdownBackend() override;
+    // Backend interface implementation
+    void Run();
+    const char* GetName() const { return "TUI"; }
+    bool InitializeBackend();
+    bool InitializeImGui();
+    void ShutdownImGui();
+    void ShutdownBackend();
 
 private:
     void* m_screen = nullptr;

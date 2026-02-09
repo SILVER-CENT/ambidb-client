@@ -1,6 +1,6 @@
 #pragma once
 
-#include "backend_interface.h"
+#include "backend_concept.h"
 #include "../app.h"
 #include <memory>
 #include <iostream>
@@ -8,65 +8,97 @@
 namespace ambidb {
 
 /**
- * @brief Base class providing common functionality for all backends.
+ * @brief CRTP base class providing common functionality for all backends.
  *
- * This class implements the Template Method pattern, where the overall
- * lifecycle is defined here, but specific initialization and rendering
- * steps are delegated to derived classes.
+ * This class uses the Curiously Recurring Template Pattern (CRTP) to achieve
+ * compile-time polymorphism, eliminating the runtime overhead of virtual functions.
+ * The Backend concept can be used to validate derived classes satisfy the interface.
+ *
+ * Usage:
+ *   class MyBackend : public BackendBase<MyBackend> {
+ *   public:
+ *       bool InitializeBackend() { ... }
+ *       bool InitializeImGui() { ... }
+ *       void Run() { ... }
+ *       void ShutdownImGui() { ... }
+ *       void ShutdownBackend() { ... }
+ *       const char* GetName() const { return "MyBackend"; }
+ *   };
+ *
+ * The derived class must be a friend of BackendBase if methods are private, or make them public.
  */
-class BackendBase : public IBackend {
+template<typename Derived>
+class BackendBase {
 public:
     BackendBase() : m_app(std::make_unique<App>()) {}
-    virtual ~BackendBase() = default;
+    ~BackendBase() = default;
 
-    bool Initialize() final {
-        std::cout << "[" << GetName() << "] Initializing backend..." << std::endl;
+    // Non-copyable, non-movable
+    BackendBase(const BackendBase&) = delete;
+    BackendBase& operator=(const BackendBase&) = delete;
+    BackendBase(BackendBase&&) = delete;
+    BackendBase& operator=(BackendBase&&) = delete;
 
-        if (!InitializeBackend()) {
-            std::cerr << "[" << GetName() << "] Backend initialization failed!" << std::endl;
+    /**
+     * @brief Initialize the backend using the Template Method pattern.
+     * Orchestrates the initialization sequence, delegating to derived class.
+     */
+    bool Initialize() {
+        // Compile-time validation that Derived satisfies Backend concept
+        static_assert(Backend<Derived>, "Derived class must satisfy Backend concept");
+
+        std::cout << "[" << derived().GetName() << "] Initializing backend..." << std::endl;
+
+        if (!derived().InitializeBackend()) {
+            std::cerr << "[" << derived().GetName() << "] Backend initialization failed!" << std::endl;
             return false;
         }
 
-        if (!InitializeImGui()) {
-            std::cerr << "[" << GetName() << "] ImGui initialization failed!" << std::endl;
+        if (!derived().InitializeImGui()) {
+            std::cerr << "[" << derived().GetName() << "] ImGui initialization failed!" << std::endl;
             return false;
         }
 
-        std::cout << "[" << GetName() << "] Initialization complete." << std::endl;
+        std::cout << "[" << derived().GetName() << "] Initialization complete." << std::endl;
         return true;
     }
 
-    void Shutdown() final {
-        std::cout << "[" << GetName() << "] Shutting down..." << std::endl;
-        ShutdownImGui();
-        ShutdownBackend();
-        std::cout << "[" << GetName() << "] Shutdown complete." << std::endl;
+    /**
+     * @brief Shutdown the backend in the correct order.
+     * Delegates to derived class for backend-specific cleanup.
+     */
+    void Shutdown() {
+        std::cout << "[" << derived().GetName() << "] Shutting down..." << std::endl;
+        derived().ShutdownImGui();
+        derived().ShutdownBackend();
+        std::cout << "[" << derived().GetName() << "] Shutdown complete." << std::endl;
+    }
+
+    /**
+     * @brief Run the main event loop.
+     * Delegates to derived class implementation.
+     */
+    void Run() {
+        derived().Run();
     }
 
 protected:
     std::unique_ptr<App> m_app;
 
+private:
     /**
-     * @brief Initialize backend-specific resources (window, screen, etc.).
-     * @return true if successful, false otherwise.
+     * @brief CRTP helper to get a reference to the derived class.
      */
-    virtual bool InitializeBackend() = 0;
+    Derived& derived() {
+        return static_cast<Derived&>(*this);
+    }
 
     /**
-     * @brief Initialize ImGui context and backend-specific ImGui setup.
-     * @return true if successful, false otherwise.
+     * @brief CRTP helper to get a const reference to the derived class.
      */
-    virtual bool InitializeImGui() = 0;
-
-    /**
-     * @brief Shutdown ImGui context and backend-specific ImGui cleanup.
-     */
-    virtual void ShutdownImGui() = 0;
-
-    /**
-     * @brief Shutdown backend-specific resources.
-     */
-    virtual void ShutdownBackend() = 0;
+    const Derived& derived() const {
+        return static_cast<const Derived&>(*this);
+    }
 };
 
 } // namespace ambidb
