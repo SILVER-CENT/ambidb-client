@@ -33,8 +33,20 @@ bool GuiBackend::Initialize() {
 
     ImGui::StyleColorsDark();
 
-    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
+    bool glfw_imgui_ok = ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+    bool gl3_imgui_ok = ImGui_ImplOpenGL3_Init(glsl_version);
+    if (!glfw_imgui_ok || !gl3_imgui_ok) {
+        if (gl3_imgui_ok) {
+            ImGui_ImplOpenGL3_Shutdown();
+        }
+        if (glfw_imgui_ok) {
+            ImGui_ImplGlfw_Shutdown();
+        }
+        ImGui::DestroyContext();
+        glfwDestroyWindow(m_window);
+        glfwTerminate();
+        return false;
+    }
 
     return true;
 }
