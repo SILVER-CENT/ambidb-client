@@ -56,6 +56,8 @@ public:
 
         if (!derived().InitializeImGui()) {
             std::cerr << "[" << derived().GetName() << "] ImGui initialization failed!" << std::endl;
+            // Clean up backend resources since InitializeBackend() succeeded
+            derived().ShutdownBackend();
             return false;
         }
 

@@ -204,11 +204,12 @@ Benefits:
 
 ```
 main()
+  → Construct Backend instance
+      (BackendBase constructor creates App instance via m_app member)
   → Backend::Initialize()
     → BackendBase::Initialize()
-      → InitializeBackend()    // Backend-specific
-      → InitializeImGui()      // Backend-specific
-        → Creates App instance
+      → InitializeBackend()    // Backend-specific (window/screen setup)
+      → InitializeImGui()      // Backend-specific (ImGui context setup)
 ```
 
 ### Runtime Phase
@@ -228,10 +229,13 @@ Backend::Run()
 ```
 Backend::Shutdown()
   → BackendBase::Shutdown()
-    → ShutdownImGui()         // Backend-specific
-    → ShutdownBackend()       // Backend-specific
-      → Destroys App instance
+    → ShutdownImGui()         // Backend-specific (ImGui cleanup)
+    → ShutdownBackend()       // Backend-specific (window/screen cleanup)
+  → Backend destructor
+      (BackendBase destructor destroys App instance via m_app unique_ptr)
 ```
+
+**Note**: The `App` instance is owned by `BackendBase::m_app` (a `std::unique_ptr<App>`), created in the `BackendBase` constructor and automatically destroyed when the backend object is destroyed.
 
 ## Optimization Strategies Applied
 

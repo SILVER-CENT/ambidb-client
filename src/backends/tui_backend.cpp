@@ -5,6 +5,7 @@
 #include <poll.h>
 #include <unistd.h>
 #include <errno.h>
+#include <cstring>
 #include <iostream>
 
 namespace ambidb {
@@ -43,7 +44,8 @@ void TuiBackend::Run() {
             // Wait for input with blocking poll
             if (poll(fds, 1, -1) == -1) {
                 if (errno != EINTR) {
-                    std::cerr << "Poll error: " << errno << std::endl;
+                    std::cerr << "Poll error while waiting for stdin: " << std::strerror(errno)
+                              << " (errno=" << errno << ")" << std::endl;
                     break;
                 }
             }
