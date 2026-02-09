@@ -2,8 +2,9 @@
 #include "imtui/imtui.h"
 #include "imtui/imtui-impl-ncurses.h"
 #include <ncurses.h>
-#include <thread>
-#include <chrono>
+#include <poll.h>
+#include <unistd.h>
+#include <errno.h>
 
 namespace ambidb {
 
@@ -22,7 +23,20 @@ bool TuiBackend::Initialize() {
 }
 
 void TuiBackend::Run() {
+    bool firstFrame = true;
     while (!m_app->ShouldClose()) {
+        if (!firstFrame) {
+            struct pollfd fds[1];
+            fds[0].fd = STDIN_FILENO;
+            fds[0].events = POLLIN;
+            if (poll(fds, 1, -1) == -1) {
+                if (errno != EINTR) {
+                    break;
+                }
+            }
+        }
+        firstFrame = false;
+
         ImTui_ImplNcurses_NewFrame();
         ImTui_ImplText_NewFrame();
         ImGui::NewFrame();
@@ -32,9 +46,6 @@ void TuiBackend::Run() {
         ImGui::Render();
         ImTui_ImplText_RenderDrawData(ImGui::GetDrawData(), (ImTui::TScreen*)m_screen);
         ImTui_ImplNcurses_DrawScreen(true);
-
-        // Prevent busy-spinning and high CPU usage
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
