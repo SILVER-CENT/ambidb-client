@@ -49,12 +49,14 @@ bool GuiBackend::InitializeImGui() {
 
     if (!ImGui_ImplGlfw_InitForOpenGL(m_window, true)) {
         std::cerr << "Failed to initialize ImGui GLFW implementation" << std::endl;
+        ImGui::DestroyContext();
         return false;
     }
 
     if (!ImGui_ImplOpenGL3_Init(config::GLSL_VERSION)) {
         std::cerr << "Failed to initialize ImGui OpenGL3 implementation" << std::endl;
         ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
         return false;
     }
 

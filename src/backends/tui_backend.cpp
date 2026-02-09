@@ -22,6 +22,8 @@ bool TuiBackend::InitializeImGui() {
     m_screen = ImTui_ImplNcurses_Init(true);
     if (!m_screen) {
         std::cerr << "Failed to initialize ImTui ncurses implementation" << std::endl;
+        ImGui::DestroyContext();
+        m_screen = nullptr;
         return false;
     }
 
