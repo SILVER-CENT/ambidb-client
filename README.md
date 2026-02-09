@@ -38,7 +38,7 @@ The project uses a "Backend Swap" architecture:
 Ensure you have the following installed on your system:
 
 * **C++ Compiler** (GCC 11+ / Clang 13+ / MSVC 2022+)
-* **CMake** (3.14+)
+* **CMake** (3.20+)
 * **Git**
 * **Libraries:**
     * `libglfw3-dev` (For GUI mode)
