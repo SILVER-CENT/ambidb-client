@@ -1,0 +1,252 @@
+---
+
+HeaderFilterRegex: '^(code|code\.cxx|include|include\.cxx|test|examples)/.*'
+
+Checks: >
+
+  # Core checks (most important)
+  -*,
+
+  # Readability and style
+  readability-*,
+
+  # Bug prevention
+  bugprone-*,
+
+  # Performance optimization
+  performance-*,
+
+  # Security (CERT standards)
+  cert-*,
+
+  # Google style guide
+  google-*,
+
+  # General utilities
+  misc-*,
+
+  # Static analysis
+  clang-analyzer-*,
+
+  # Thread safety
+  concurrency-*,
+
+  # Platform compatibility
+  portability-*,
+
+  # ============================================================================
+  # C++ CORE GUIDELINES
+  # ============================================================================
+
+  # Base set
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-c-copy-assignment-signature,
+  cppcoreguidelines-avoid-non-const-global-variables,
+  cppcoreguidelines-interfaces-global-init,
+  cppcoreguidelines-narrowing-conversions,
+
+  # Modern C++ focused
+  cppcoreguidelines-avoid-magic-numbers,
+  cppcoreguidelines-explicit-virtual-functions,
+  cppcoreguidelines-special-member-functions,
+  
+  # ============================================================================
+  # MODERNIZE CHECKS (union of both configs)
+  # ============================================================================
+
+  # Base modernization
+  modernize-use-nullptr,
+  modernize-redundant-void-arg,
+  modernize-use-bool-literals,
+
+  # Additional modernization
+  modernize-use-auto,
+  modernize-use-override,
+  modernize-use-final,
+  modernize-use-equals-default,
+  modernize-use-equals-delete,
+  modernize-make-unique,
+  modernize-make-shared,
+  modernize-raw-string-literal,
+  modernize-use-emplace,
+  modernize-avoid-bind,
+  modernize-loop-convert,
+  modernize-pass-by-value,
+  modernize-return-braced-init-list,
+  modernize-shrink-to-fit,
+  modernize-use-noexcept,
+  modernize-use-transparent-functors,
+  cppcoreguidelines-pro-type-vararg,
+
+WarningsAsErrors: "*"
+FormatStyle: "file"
+
+CheckOptions:
+  # ============================================================================
+  # C++ STL NAMING CONVENTIONS (consistent across both projects)
+  # ============================================================================
+
+  # Functions - snake_case (like std::begin, std::end); allow existing camelCase/PascalCase
+  readability-identifier-naming.FunctionCase: lower_case
+  readability-identifier-naming.FunctionIgnoredRegexp: "^(__.*|[A-Z][a-z0-9]+([A-Z][a-z0-9]+)*|[a-z][a-z0-9]*([A-Z][a-z0-9]+)*)$"
+
+  # Classes - CamelCase (like std::vector, std::string)
+  readability-identifier-naming.ClassCase: CamelCase
+
+  # Structs - CamelCase (like std::pair, std::tuple) - same as classes in C++
+  readability-identifier-naming.StructCase: CamelCase
+
+  # Methods - snake_case (like begin(), end(), push_back())
+  readability-identifier-naming.MethodCase: lower_case
+  readability-identifier-naming.MethodIgnoredRegexp: "^(operator|__.*)$"
+
+  # Variables - snake_case (local variables, member variables)
+  readability-identifier-naming.VariableCase: lower_case
+  readability-identifier-naming.VariableIgnoredRegexp: "^(k[A-Z].*|g[A-Z].*|_.*)$"
+
+  # Parameters - snake_case (function parameters)
+  readability-identifier-naming.ParameterCase: lower_case
+  readability-identifier-naming.ParameterIgnoredRegexp: "^_$"
+
+  # Global variables - snake_case (no enforced prefix to avoid churn)
+  readability-identifier-naming.GlobalVariableCase: lower_case
+  readability-identifier-naming.GlobalVariablePrefix: ""
+  readability-identifier-naming.GlobalVariableIgnoredRegexp: "^(__.*)$"
+
+  # Constants - CamelCase preferred; allow UPPER_CASE and kXxx
+  readability-identifier-naming.ConstantCase: CamelCase
+  readability-identifier-naming.ConstantIgnoredRegexp: "^([A-Z][A-Z0-9_]*|k[A-Z].*)$"
+  readability-identifier-naming.ConstantParameterCase: lower_case
+
+  # Macros - UPPER_CASE (like #define MAX_SIZE)
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+  readability-identifier-naming.MacroDefinitionIgnoredRegexp: "^(k[A-Z].*|__.*)$"
+
+  # Enums - CamelCase for enum type (like Color, Shape)
+  readability-identifier-naming.EnumCase: CamelCase
+
+  # Enum constants - UPPER_CASE (like RED, GREEN, BLUE)
+  readability-identifier-naming.EnumConstantCase: UPPER_CASE
+  readability-identifier-naming.EnumConstantIgnoredRegexp: "^(k[A-Z].*)$"
+
+  # Templates - special handling for template parameters
+  readability-identifier-naming.TemplateParameterCase: CamelCase
+  readability-identifier-naming.TemplateParameterIgnoredRegexp: "^(T|U|V|Args|Ts|typename|class).*$"
+
+  # Type aliases - CamelCase (like String, Vector)
+  readability-identifier-naming.TypedefCase: CamelCase
+
+  # Union - CamelCase (like union Data)
+  readability-identifier-naming.UnionCase: CamelCase
+
+  # Namespace - lower_case (like namespace utils)
+  readability-identifier-naming.NamespaceCase: lower_case
+
+  # ============================================================================
+  # FUNCTION SIZE LIMITS
+  # ============================================================================
+
+  readability-function-size.LineThreshold: 100
+  readability-function-size.ParameterThreshold: 8
+  readability-function-size.StatementThreshold: 60
+  readability-function-size.NestingThreshold: 5
+  readability-function-size.BranchThreshold: 12
+
+  # ============================================================================
+  # CERT SECURITY STANDARDS
+  # ============================================================================
+
+  cert-str34-c.DiagnoseSignedUnsignedCharComparisons: true
+  cert-flp30-c.WarnOnFloatingPointImplicitConversions: true
+  cert-fio38-c.Enabled: true
+  cert-msc30-c.Enabled: true
+  cert-msc50-cpp.Enabled: true
+  cert-dcl16-c.Enabled: true
+  cert-err34-c.Enabled: true
+  cert-err52-cpp.Enabled: true
+  cert-err58-cpp.Enabled: true
+  cert-err60-cpp.Enabled: true
+
+  # ============================================================================
+  # CONCURRENCY & THREAD SAFETY
+  # ============================================================================
+
+  bugprone-signal-handler.Enabled: true
+  cert-sig30-c.Enabled: true
+  concurrency-mt-unsafe.Enabled: true
+  concurrency-thread-canceltype-asynchronous.Enabled: true
+
+  # ============================================================================
+  # PERFORMANCE OPTIMIZATIONS
+  # ============================================================================
+
+  performance-faster-string-find.Enabled: true
+  performance-inefficient-algorithm.Enabled: true
+  performance-inefficient-string-concatenation.Enabled: true
+  performance-inefficient-vector-operation.Enabled: true
+  performance-type-promotion-in-math-fn.Enabled: true
+  performance-unnecessary-value-param.Enabled: true
+  performance-unnecessary-copy-initialization.Enabled: true
+  performance-no-automatic-move.Enabled: true
+
+  # ============================================================================
+  # READABILITY & STYLE IMPROVEMENTS
+  # ============================================================================
+
+  readability-braces-around-statements.ShortStatementLines: 1
+  readability-implicit-bool-conversion.AllowIntegerConditions: true
+  readability-implicit-bool-conversion.AllowPointerConditions: true
+  readability-magic-numbers.IgnoredIntegerValues: "0;1;2;3;4;5;6;7;8;9;10;16;32;64;100;128;256;512;1000;1024;2048;4096;8192"
+  readability-magic-numbers.IgnoreAllFloatingPointValues: true
+  readability-redundant-control-flow.Enabled: true
+  readability-redundant-declaration.Enabled: true
+  readability-redundant-member-init.Enabled: true
+  readability-redundant-preprocessor.Enabled: true
+  readability-simplify-boolean-expr.Enabled: true
+  readability-static-accessed-through-instance.Enabled: true
+  readability-uniqueptr-delete-release.Enabled: true
+
+  # ============================================================================
+  # BUGPRONE CHECKS (COMPREHENSIVE)
+  # ============================================================================
+
+  # Core bugprone checks
+  bugprone-assert-side-effect.Enabled: true
+  bugprone-bool-pointer-implicit-conversion.Enabled: true
+  bugprone-dangling-handle.Enabled: true
+  bugprone-fold-init-type.Enabled: true
+  bugprone-forward-declaration-namespace.Enabled: true
+  bugprone-forwarding-reference-overload.Enabled: true
+  bugprone-inaccurate-erase.Enabled: true
+  bugprone-incorrect-roundings.Enabled: true
+  bugprone-integer-division.Enabled: true
+  bugprone-lambda-function-name.Enabled: true
+  bugprone-macro-parentheses.Enabled: true
+  bugprone-macro-repeated-side-effects.Enabled: true
+  bugprone-misplaced-operator-in-strlen-in-alloc.Enabled: true
+  bugprone-misplaced-widening-cast.Enabled: true
+  bugprone-move-forwarding-reference.Enabled: true
+  bugprone-multiple-statement-macro.Enabled: true
+  bugprone-not-null-terminated-result.Enabled: true
+  bugprone-parent-virtual-call.Enabled: true
+  bugprone-posix-return.Enabled: true
+  bugprone-sizeof-container.Enabled: true
+  bugprone-sizeof-expression.Enabled: true
+  bugprone-string-constructor.Enabled: true
+  bugprone-string-integer-assignment.Enabled: true
+  bugprone-string-literal-with-embedded-nul.Enabled: true
+  bugprone-suspicious-enum-usage.Enabled: true
+  bugprone-suspicious-memset-usage.Enabled: true
+  bugprone-suspicious-missing-comma.Enabled: true
+  bugprone-suspicious-semicolon.Enabled: true
+  bugprone-suspicious-string-compare.Enabled: true
+  bugprone-swapped-arguments.Enabled: true
+  bugprone-terminating-continue.Enabled: true
+  bugprone-throw-keyword-missing.Enabled: true
+  bugprone-too-small-loop-variable.Enabled: true
+  bugprone-undefined-memory-manipulation.Enabled: true
+  bugprone-undelegated-constructor.Enabled: true
+  bugprone-unused-raii.Enabled: true
+  bugprone-unused-return-value.Enabled: true
+  bugprone-use-after-move.Enabled: true
+  bugprone-virtual-near-miss.Enabled: true

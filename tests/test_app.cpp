@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../src/app.h"
+#include "app.h"
 
 TEST(AppTest, InitialState) {
     ambidb::App app;

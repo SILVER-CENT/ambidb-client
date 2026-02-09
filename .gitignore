@@ -1,3 +1,16 @@
 build/
 build-*/
 build/
+.cache/clangd/index/app.cpp.2D7E1E4CE51CC4F3.idx
+.cache/clangd/index/app.cxx.F3BB0FCC6BF26416.idx
+.cache/clangd/index/app.h.4CCE454BCE070223.idx
+.cache/clangd/index/backend_base.h.F6BBF7C0B0DDA9B8.idx
+.cache/clangd/index/backend_concept.h.7CC56882044B7E11.idx
+.cache/clangd/index/backend.cxx.671B86112BD38B97.idx
+.cache/clangd/index/backend.h.F434BC9301F50FA5.idx
+.cache/clangd/index/macro.h.E36F432768FD56C8.idx
+.cache/clangd/index/main.cpp.5CCBBBA8F13BA935.idx
+.cache/clangd/index/main.cxx.A9699E669FB4388B.idx
+.cache/clangd/index/test_app.cpp.22497C5BA0D6A8AE.idx
+.cache/clangd/index/tui_backend.cpp.310321546E68240D.idx
+.cache/clangd/index/tui_backend.h.293C81ACDF0D9855.idx
