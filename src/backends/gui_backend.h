@@ -1,22 +1,33 @@
 #pragma once
-#include "../app.h"
-#include <memory>
+
+#include "backend_base.h"
 
 struct GLFWwindow;
 
 namespace ambidb {
 
-class GuiBackend {
+/**
+ * @brief GUI backend implementation using GLFW and OpenGL.
+ *
+ * This backend provides a hardware-accelerated graphical interface
+ * suitable for desktop environments with display servers.
+ *
+ * Uses CRTP pattern via BackendBase<GuiBackend> for compile-time polymorphism.
+ */
+class GuiBackend : public BackendBase<GuiBackend> {
 public:
-    GuiBackend();
-    ~GuiBackend();
+    GuiBackend() = default;
+    ~GuiBackend() = default;
 
-    bool Initialize();
+    // Backend interface implementation
     void Run();
-    void Shutdown();
+    const char* GetName() const { return "GUI"; }
+    bool InitializeBackend();
+    bool InitializeImGui();
+    void ShutdownImGui();
+    void ShutdownBackend();
 
 private:
-    std::unique_ptr<App> m_app;
     GLFWwindow* m_window = nullptr;
 };
 

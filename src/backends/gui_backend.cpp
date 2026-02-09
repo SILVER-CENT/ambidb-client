@@ -1,37 +1,65 @@
 #include "gui_backend.h"
-#include <iostream>
+#include "backend_config.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <GLFW/glfw3.h>
+#include <iostream>
+#include <string>
 
 namespace ambidb {
 
-GuiBackend::GuiBackend() : m_app(std::make_unique<App>()) {}
-GuiBackend::~GuiBackend() {}
+bool GuiBackend::InitializeBackend() {
+    if (!glfwInit()) {
+        std::cerr << "Failed to initialize GLFW" << std::endl;
+        return false;
+    }
 
-bool GuiBackend::Initialize() {
-    if (!glfwInit()) return false;
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, config::OPENGL_MAJOR_VERSION);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, config::OPENGL_MINOR_VERSION);
 
-    const char* glsl_version = "#version 130";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    std::string title = std::string(config::WINDOW_TITLE) + " (GUI)";
+    m_window = glfwCreateWindow(
+        config::DEFAULT_WINDOW_WIDTH,
+        config::DEFAULT_WINDOW_HEIGHT,
+        title.c_str(),
+        nullptr,
+        nullptr
+    );
 
-    m_window = glfwCreateWindow(1280, 720, "AmbiDB Client (GUI)", nullptr, nullptr);
-    if (!m_window) return false;
+    if (!m_window) {
+        std::cerr << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return false;
+    }
 
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1); // Enable vsync
 
+    return true;
+}
+
+bool GuiBackend::InitializeImGui() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
     ImGui::StyleColorsDark();
 
-    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
+    if (!ImGui_ImplGlfw_InitForOpenGL(m_window, true)) {
+        std::cerr << "Failed to initialize ImGui GLFW implementation" << std::endl;
+        ImGui::DestroyContext();
+        return false;
+    }
+
+    if (!ImGui_ImplOpenGL3_Init(config::GLSL_VERSION)) {
+        std::cerr << "Failed to initialize ImGui OpenGL3 implementation" << std::endl;
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
+        return false;
+    }
 
     return true;
 }
@@ -50,7 +78,12 @@ void GuiBackend::Run() {
         int display_w, display_h;
         glfwGetFramebufferSize(m_window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+        glClearColor(
+            config::CLEAR_COLOR_R,
+            config::CLEAR_COLOR_G,
+            config::CLEAR_COLOR_B,
+            config::CLEAR_COLOR_A
+        );
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -58,12 +91,17 @@ void GuiBackend::Run() {
     }
 }
 
-void GuiBackend::Shutdown() {
+void GuiBackend::ShutdownImGui() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+}
 
-    glfwDestroyWindow(m_window);
+void GuiBackend::ShutdownBackend() {
+    if (m_window) {
+        glfwDestroyWindow(m_window);
+        m_window = nullptr;
+    }
     glfwTerminate();
 }
 
