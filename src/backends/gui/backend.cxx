@@ -4,7 +4,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <GLFW/glfw3.h>
-#include <iostream>
+#include <print>
 #include <string>
 
 namespace ambidb {
@@ -12,7 +12,7 @@ namespace ambidb {
 	bool
 	GuiBackend::InitializeBackend () {
 		if (!glfwInit ()) {
-			std::cerr << "Failed to initialize GLFW" << std::endl;
+			std::println (stderr, "Failed to initialize GLFW");
 			return false;
 		}
 
@@ -27,7 +27,7 @@ namespace ambidb {
 									 nullptr);
 
 		if (!m_window) {
-			std::cerr << "Failed to create GLFW window" << std::endl;
+			std::println (stderr, "Failed to create GLFW window");
 			glfwTerminate ();
 			return false;
 		}
@@ -61,13 +61,13 @@ namespace ambidb {
 		ImGui::StyleColorsDark ();
 
 		if (!ImGui_ImplGlfw_InitForOpenGL (m_window, true)) {
-			std::cerr << "Failed to initialize ImGui GLFW implementation" << std::endl;
+			std::println (stderr, "Failed to initialize ImGui GLFW implementation");
 			ImGui::DestroyContext ();
 			return false;
 		}
 
 		if (!ImGui_ImplOpenGL3_Init (config::GLSL_VERSION)) {
-			std::cerr << "Failed to initialize ImGui OpenGL3 implementation" << std::endl;
+			std::println (stderr, "Failed to initialize ImGui OpenGL3 implementation");
 			ImGui_ImplGlfw_Shutdown ();
 			ImGui::DestroyContext ();
 			return false;
@@ -78,14 +78,17 @@ namespace ambidb {
 
 	void
 	GuiBackend::Run () {
-		while (!glfwWindowShouldClose (m_window) && !m_app->ShouldClose ()) {
-			glfwPollEvents ();
+		while (!glfwWindowShouldClose (m_window)) {
+			// glfwPollEvents ();
+			glfwWaitEvents ();
 
 			ImGui_ImplOpenGL3_NewFrame ();
 			ImGui_ImplGlfw_NewFrame ();
 			ImGui::NewFrame ();
 
-			m_app->Update ();
+			if (RunFrame ()) {
+				break;
+			}
 
 			ImGui::Render ();
 			int display_w, display_h;

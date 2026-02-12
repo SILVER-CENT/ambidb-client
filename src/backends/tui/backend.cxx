@@ -1,12 +1,12 @@
 #include "backend.h"
 #include "imtui/imtui.h"
 #include "imtui/imtui-impl-ncurses.h"
+#include <cerrno>
+#include <cstring>
 #include <ncurses.h>
 #include <poll.h>
+#include <print>
 #include <unistd.h>
-#include <errno.h>
-#include <cstring>
-#include <iostream>
 
 namespace ambidb {
 
@@ -24,7 +24,7 @@ namespace ambidb {
 
 		m_screen = ImTui_ImplNcurses_Init (true);
 		if (!m_screen) {
-			std::cerr << "Failed to initialize ImTui ncurses implementation" << std::endl;
+			std::println (stderr, "Failed to initialize ImTui ncurses implementation");
 			ImGui::DestroyContext ();
 			m_screen = nullptr;
 			return false;
@@ -37,18 +37,15 @@ namespace ambidb {
 	void
 	TuiBackend::Run () {
 		bool firstFrame = true;
-		while (!m_app->ShouldClose ()) {
-			// Skip polling on the first frame to avoid delay
+		while (true) {
 			if (!firstFrame) {
 				struct pollfd fds [1];
 				fds [0].fd = STDIN_FILENO;
 				fds [0].events = POLLIN;
-
-				// Wait for input with blocking poll
 				if (poll (fds, 1, -1) == -1) {
 					if (errno != EINTR) {
-						std::cerr << "Poll error while waiting for stdin: " << std::strerror (errno)
-								  << " (errno=" << errno << ")" << std::endl;
+						std::println (stderr, "Poll error while waiting for stdin: {} (errno={})",
+									  std::strerror (errno), errno);
 						break;
 					}
 				}
@@ -59,7 +56,9 @@ namespace ambidb {
 			ImTui_ImplText_NewFrame ();
 			ImGui::NewFrame ();
 
-			m_app->Update ();
+			if (RunFrame ()) {
+				break;
+			}
 
 			ImGui::Render ();
 			ImTui_ImplText_RenderDrawData (ImGui::GetDrawData (), (ImTui::TScreen*) m_screen);

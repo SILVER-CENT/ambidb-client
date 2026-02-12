@@ -2,8 +2,9 @@
 
 #include "backend_concept.h"
 #include <app.h>
+#include <functional>
 #include <memory>
-#include <iostream>
+#include <print>
 
 namespace ambidb {
 
@@ -46,23 +47,21 @@ namespace ambidb {
 			// Compile-time validation that Derived satisfies Backend concept
 			static_assert (Backend<Derived>, "Derived class must satisfy Backend concept");
 
-			std::cout << "[" << derived ().GetName () << "] Initializing backend..." << std::endl;
+			std::println ("[{}] Initializing backend...", derived ().GetName ());
 
 			if (!derived ().InitializeBackend ()) {
-				std::cerr << "[" << derived ().GetName ()
-						  << "] Backend initialization failed!" << std::endl;
+				std::println (stderr, "[{}] Backend initialization failed!", derived ().GetName ());
 				return false;
 			}
 
 			if (!derived ().InitializeImGui ()) {
-				std::cerr << "[" << derived ().GetName ()
-						  << "] ImGui initialization failed!" << std::endl;
+				std::println (stderr, "[{}] ImGui initialization failed!", derived ().GetName ());
 				// Clean up backend resources since InitializeBackend() succeeded
 				derived ().ShutdownBackend ();
 				return false;
 			}
 
-			std::cout << "[" << derived ().GetName () << "] Initialization complete." << std::endl;
+			std::println ("[{}] Initialization complete.", derived ().GetName ());
 			return true;
 		}
 
@@ -72,10 +71,10 @@ namespace ambidb {
 		 */
 		void
 		Shutdown () {
-			std::cout << "[" << derived ().GetName () << "] Shutting down..." << std::endl;
+			std::println ("[{}] Shutting down...", derived ().GetName ());
 			derived ().ShutdownImGui ();
 			derived ().ShutdownBackend ();
-			std::cout << "[" << derived ().GetName () << "] Shutdown complete." << std::endl;
+			std::println ("[{}] Shutdown complete.", derived ().GetName ());
 		}
 
 		/**
@@ -87,8 +86,31 @@ namespace ambidb {
 			derived ().Run ();
 		}
 
+		/**
+		 * @brief Set an optional per-frame callback. If set, Run() uses it instead of App.
+		 * Callback returns true when the app should close.
+		 */
+		void
+		SetFrameCallback (std::function<bool ()> f) {
+			m_frameCallback = std::move (f);
+		}
+
 	protected:
+		/**
+		 * @brief Run one frame: either the custom callback or App::Update().
+		 * @return true if the main loop should exit.
+		 */
+		bool
+		RunFrame () {
+			if (m_frameCallback) {
+				return m_frameCallback ();
+			}
+			m_app->Update ();
+			return m_app->ShouldClose ();
+		}
+
 		std::unique_ptr<App> m_app;
+		std::function<bool ()> m_frameCallback;
 
 	private:
 		/**

@@ -1,14 +1,31 @@
 #pragma once
 #include <macro.h>
-#include "imgui.h"
+#include <string>
+#include <vector>
 
 namespace ambidb {
+
+	enum class Page {
+		Dashboard,
+		Connections,
+		QueryEditor,
+		SchemaBrowser,
+		DataGrid,
+		QueryHistory,
+		Settings,
+	};
+
+	struct ConnectionInfo {
+		std::string name;
+		std::string type;  // "postgresql", "mysql", "sqlite"
+		bool connected{false};
+	};
 
 	class App {
 	public:
 		MAKE_NONCOPYABLE (App);
 		MAKE_NONMOVABLE (App);
-		App () = default;
+		App ();
 		~App () = default;
 
 		void
@@ -19,9 +36,19 @@ namespace ambidb {
 		}
 
 	private:
+		void
+		RenderSidebar ();
+		void
+		RenderContent ();
+		void
+		ConnectionEntry (const ConnectionInfo& conn);
+
 		bool m_shouldClose{false};
-		int m_counter{0};
-		bool m_hasCenteredWindow{true};
+
+		Page m_activePage{Page::Dashboard};
+		bool m_connectionsExpanded{true};
+
+		std::vector<ConnectionInfo> m_connections;
 	};
 
 }  // namespace ambidb
